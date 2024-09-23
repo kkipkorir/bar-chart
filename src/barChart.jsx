@@ -8,7 +8,7 @@ const BarChartComponent = () => {
     fetch("https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/GDP-data.json")
       .then((response) => response.json())
       .then((data) => {
-        setData(data.data);  // Extracting the 'data' array from the JSON
+        setData(data.data); // Extracting the 'data' array from the JSON
       })
       .catch((error) => console.error("Error fetching data", error));
   }, []);
@@ -16,38 +16,61 @@ const BarChartComponent = () => {
   useEffect(() => {
     if (data.length > 0) {
       // Set dimensions
-      const width = 800;
+      const width = 900;
       const height = 400;
       const padding = 50;
-      
-      //setting the x scale data
-      const xScaleData = d3.scaleTime()
-      .domain([d3.min(data,(d)=>new Date([0])),d3.max(data,(d)=>new Date([0]))])
-      .range([padding,width-padding]);
 
-      const yScale = d3.scaleLinear()
-      .domain([d3.min(data,(d)=>d[1]),d3.max(data,(d)=>d[1])])
-      .range([h-padding],padding);
-
-      const xScale = d3.scaleBand()
-      .domain(data.map((d)=>Pars))
-      .range()
+      // Clear any existing SVG
+      d3.select("#bar-chart").select("svg").remove();
 
       // Create an SVG container
       const svg = d3
         .select("#bar-chart")
         .append("svg")
         .attr("width", width)
-        .attr("height", height)
+        .attr("height", height);
 
-      svg.selectAll('rect')
-      .data(data)
-      .enter()
-      .append('rect')
-      .attr('x', (d) => xScaleData(new Date(d[0])))
-      .attr('y',(d)=>yScale(d[1]))
-      .attr('width',)
-      .attr('height',)
+      // Parse date
+      const ParseDate = d3.timeParse("%Y-%m-%d");
+
+      // Create scales
+      const xScale = d3
+        .scaleTime()
+        .domain([d3.min(data, (d) => ParseDate(d[0])), d3.max(data, (d) => ParseDate(d[0]))])
+        .range([padding, width - padding]);
+
+      const yScale = d3
+        .scaleLinear()
+        .domain([0, d3.max(data, (d) => d[1])]) // Start from 0 for better visualization
+        .range([height - padding, padding]);
+
+      // Calculate the width of each bar
+      const barWidth = (width - 2 * padding) / data.length;
+
+      // Append bars to the chart
+      svg
+        .selectAll(".bar")
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("class", "bar")
+        .attr("x", (d) => xScale(ParseDate(d[0]))) // X position based on the date
+        .attr("y", (d) => yScale(d[1])) // Y position based on GDP value
+        .attr("width", barWidth - 2) // Give a small gap between the bars
+        .attr("height", (d) => height - padding - yScale(d[1])) // Bar height based on GDP value
+        .attr("fill", "steelblue");
+
+      // Append X axis
+      svg
+        .append("g")
+        .attr("transform", `translate(0, ${height - padding})`)
+        .call(d3.axisBottom(xScale));
+
+      // Append Y axis
+      svg
+        .append("g")
+        .attr("transform", `translate(${padding}, 0)`)
+        .call(d3.axisLeft(yScale));
     }
   }, [data]); // Trigger effect after data is fetched
 

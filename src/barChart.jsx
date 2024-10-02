@@ -16,7 +16,7 @@ const BarChartComponent = () => {
   useEffect(() => {
     if (data.length > 0) {
       // Set dimensions
-      const width = 900;
+      const width = 800;
       const height = 400;
       const padding = 50;
 
